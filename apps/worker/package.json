@@ -1,0 +1,26 @@
+{
+  "name": "@pr-guard/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pr-guard/ai": "file:../../packages/ai",
+    "@pr-guard/analysis": "file:../../packages/analysis",
+    "@pr-guard/db": "file:../../packages/db",
+    "@pr-guard/github": "file:../../packages/github",
+    "@pr-guard/shared": "file:../../packages/shared",
+    "bullmq": "latest",
+    "dotenv": "latest",
+    "ioredis": "latest",
+    "pino": "latest"
+  },
+  "devDependencies": {
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

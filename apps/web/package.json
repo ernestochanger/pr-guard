@@ -1,0 +1,33 @@
+{
+  "name": "@pr-guard/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "latest",
+    "@pr-guard/analysis": "file:../../packages/analysis",
+    "@pr-guard/db": "file:../../packages/db",
+    "@pr-guard/github": "file:../../packages/github",
+    "@pr-guard/shared": "file:../../packages/shared",
+    "bullmq": "latest",
+    "ioredis": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
+    "next-auth": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
+  }
+}

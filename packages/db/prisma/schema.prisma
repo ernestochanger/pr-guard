@@ -1,0 +1,424 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RepositoryConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  INSTALLATION_REVOKED
+  SUSPENDED
+}
+
+enum AnalysisStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+  SKIPPED
+}
+
+enum ReviewerType {
+  DETERMINISTIC
+  QUALITY
+  SECURITY
+  ARCHITECTURE
+}
+
+enum ReviewerRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum FindingCategory {
+  QUALITY
+  SECURITY
+  ARCHITECTURE
+  MAINTAINABILITY
+  RELIABILITY
+  TESTING
+}
+
+enum AIProvider {
+  OPENAI
+  GOOGLE
+}
+
+enum PullRequestEventType {
+  OPENED
+  REOPENED
+  SYNCHRONIZE
+  MANUAL_RERUN
+}
+
+enum CommentPublishStatus {
+  PENDING
+  PUBLISHED
+  UPDATED
+  FAILED
+  SKIPPED
+}
+
+model User {
+  id                    String                 @id @default(cuid())
+  name                  String?
+  email                 String?                @unique
+  emailVerified         DateTime?
+  image                 String?
+  githubLogin           String?
+  githubUserId          BigInt?                @unique
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  accounts              Account[]
+  sessions              Session[]
+  repositoryMemberships RepositoryMembership[]
+  analysesCreated       PullRequestAnalysis[]  @relation("AnalysisCreator")
+  realtimeEvents        RealtimeEvent[]
+  auditLogs             AuditLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model GitHubInstallation {
+  id                    String                 @id @default(cuid())
+  githubInstallationId  BigInt                 @unique
+  accountLogin          String
+  accountType           String?
+  targetType            String?
+  permissions           Json?
+  suspendedAt           DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  repositories          Repository[]
+}
+
+model Repository {
+  id                 String                      @id @default(cuid())
+  githubRepositoryId BigInt                      @unique
+  installationId     String
+  installation        GitHubInstallation          @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  owner              String
+  name               String
+  fullName           String
+  htmlUrl            String
+  defaultBranch      String?
+  isPrivate          Boolean                     @default(false)
+  connectionStatus   RepositoryConnectionStatus  @default(CONNECTED)
+  connectedAt        DateTime                    @default(now())
+  disconnectedAt     DateTime?
+  syncedAt           DateTime?
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+  settings           RepositorySettings?
+  memberships        RepositoryMembership[]
+  pullRequests       PullRequest[]
+  analyses           PullRequestAnalysis[]
+  realtimeEvents     RealtimeEvent[]
+  auditLogs          AuditLog[]
+
+  @@index([owner, name])
+  @@index([connectionStatus])
+}
+
+model RepositoryMembership {
+  id           String     @id @default(cuid())
+  userId       String
+  repositoryId String
+  role         String     @default("member")
+  canAdmin     Boolean    @default(false)
+  lastSeenAt   DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, repositoryId])
+  @@index([repositoryId])
+}
+
+model RepositorySettings {
+  id                  String     @id @default(cuid())
+  repositoryId        String     @unique
+  qualityEnabled      Boolean    @default(true)
+  securityEnabled     Boolean    @default(true)
+  architectureEnabled Boolean    @default(true)
+  minimumSeverity     Severity   @default(MEDIUM)
+  aiProvider          AIProvider @default(OPENAI)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  repository          Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+}
+
+model PullRequest {
+  id                   String                @id @default(cuid())
+  repositoryId          String
+  githubPullRequestId   BigInt?
+  number               Int
+  title                String
+  authorLogin          String?
+  headSha              String
+  baseSha              String?
+  headRef              String?
+  baseRef              String?
+  state                String               @default("open")
+  htmlUrl              String
+  lastWebhookEventAt    DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  repository           Repository           @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  analyses             PullRequestAnalysis[]
+
+  @@unique([repositoryId, number])
+  @@index([repositoryId, headSha])
+}
+
+model PullRequestAnalysis {
+  id                String              @id @default(cuid())
+  repositoryId      String
+  pullRequestId     String
+  headSha           String
+  status            AnalysisStatus      @default(QUEUED)
+  sourceEventType   PullRequestEventType
+  aiProvider        AIProvider
+  minimumSeverity   Severity
+  overallSeverity   Severity?
+  summary           String?
+  supportedFiles    Int                 @default(0)
+  ignoredFiles      Int                 @default(0)
+  surfacedFindings  Int                 @default(0)
+  totalFindings     Int                 @default(0)
+  error             String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdByUserId   String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  repository        Repository          @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  pullRequest       PullRequest         @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  createdBy         User?               @relation("AnalysisCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  attempts          AnalysisAttempt[]
+  findings          Finding[]
+  publishedComment  PublishedComment?
+  realtimeEvents    RealtimeEvent[]
+
+  @@index([repositoryId, status])
+  @@index([pullRequestId, headSha])
+}
+
+model AnalysisAttempt {
+  id             String               @id @default(cuid())
+  analysisId     String
+  attemptNumber  Int
+  status         AnalysisStatus       @default(QUEUED)
+  reason         PullRequestEventType
+  queueJobId     String?
+  error          String?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  analysis       PullRequestAnalysis   @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  reviewerRuns   ReviewerRun[]
+  findings       Finding[]
+  queueTasks     QueueTask[]
+  publishedLogs  PublishedCommentLog[]
+
+  @@unique([analysisId, attemptNumber])
+}
+
+model ReviewerRun {
+  id             String            @id @default(cuid())
+  attemptId      String
+  reviewerType   ReviewerType
+  status         ReviewerRunStatus @default(PENDING)
+  aiProvider     AIProvider?
+  summary        String?
+  rawInput       Json?
+  rawOutput      Json?
+  error          String?
+  promptTokens   Int?
+  completionTokens Int?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  attempt        AnalysisAttempt   @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  findings       Finding[]
+
+  @@unique([attemptId, reviewerType])
+}
+
+model Finding {
+  id            String              @id @default(cuid())
+  analysisId    String
+  attemptId     String
+  reviewerRunId String?
+  reviewerType  ReviewerType
+  category      FindingCategory
+  severity      Severity
+  title         String
+  explanation   String              @db.Text
+  filePath      String?
+  lineStart     Int?
+  lineEnd       Int?
+  confidence    Float
+  fingerprint   String
+  surfaced      Boolean             @default(false)
+  raw           Json?
+  createdAt     DateTime            @default(now())
+  analysis      PullRequestAnalysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  attempt       AnalysisAttempt      @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  reviewerRun   ReviewerRun?         @relation(fields: [reviewerRunId], references: [id], onDelete: SetNull)
+
+  @@unique([analysisId, fingerprint])
+  @@index([analysisId, severity])
+  @@index([analysisId, category])
+  @@index([analysisId, reviewerType])
+}
+
+model PublishedComment {
+  id              String                @id @default(cuid())
+  analysisId      String                @unique
+  githubCommentId BigInt?
+  status          CommentPublishStatus  @default(PENDING)
+  body            String?               @db.Text
+  error           String?
+  lastPublishedAt DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  analysis        PullRequestAnalysis    @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  logs            PublishedCommentLog[]
+}
+
+model PublishedCommentLog {
+  id                 String           @id @default(cuid())
+  publishedCommentId String
+  attemptId          String?
+  githubCommentId    BigInt?
+  status             CommentPublishStatus
+  body               String?          @db.Text
+  error              String?
+  createdAt          DateTime         @default(now())
+  publishedComment   PublishedComment @relation(fields: [publishedCommentId], references: [id], onDelete: Cascade)
+  attempt            AnalysisAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+}
+
+model WebhookEvent {
+  id                    String    @id @default(cuid())
+  deliveryId            String    @unique
+  eventName             String
+  action                String?
+  githubInstallationId  BigInt?
+  githubRepositoryId    BigInt?
+  repositoryFullName    String?
+  payload               Json
+  ignored               Boolean   @default(false)
+  processedAt           DateTime?
+  error                 String?
+  createdAt             DateTime  @default(now())
+
+  @@index([eventName, action])
+  @@index([githubRepositoryId])
+}
+
+model QueueTask {
+  id              String           @id @default(cuid())
+  queueName       String
+  jobId           String
+  kind            String
+  status          String           @default("queued")
+  payload         Json
+  attemptsMade    Int              @default(0)
+  error           String?
+  analysisAttemptId String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  analysisAttempt AnalysisAttempt? @relation(fields: [analysisAttemptId], references: [id], onDelete: SetNull)
+
+  @@unique([queueName, jobId])
+  @@index([status])
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  userId       String?
+  repositoryId String?
+  action       String
+  metadata     Json?
+  createdAt    DateTime    @default(now())
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  repository   Repository? @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+
+  @@index([repositoryId, createdAt])
+}
+
+model AIProviderConfig {
+  id          String     @id @default(cuid())
+  provider    AIProvider @unique
+  enabled     Boolean    @default(true)
+  model       String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model RealtimeEvent {
+  id           String      @id @default(cuid())
+  type         String
+  userId       String?
+  repositoryId String?
+  analysisId   String?
+  payload      Json
+  createdAt    DateTime    @default(now())
+  user         User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repository   Repository? @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  analysis     PullRequestAnalysis? @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([repositoryId, createdAt])
+  @@index([analysisId, createdAt])
+}

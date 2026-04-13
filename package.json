@@ -1,0 +1,37 @@
+{
+  "name": "pr-guard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PR Guard automated first-pass pull request review MVP.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @pr-guard/web run dev",
+    "dev:worker": "npm --workspace @pr-guard/worker run dev",
+    "build:web": "npm --workspace @pr-guard/web run build",
+    "start:web": "npm --workspace @pr-guard/web run start",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "prisma:generate": "npm --workspace @pr-guard/db run generate",
+    "prisma:migrate": "npm --workspace @pr-guard/db run migrate",
+    "prisma:studio": "npm --workspace @pr-guard/db run studio"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@vitest/coverage-v8": "latest",
+    "eslint": "latest",
+    "prettier": "latest",
+    "tsx": "latest",
+    "typescript-eslint": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  },
+  "engines": {
+    "node": ">=20.18.0"
+  }
+}

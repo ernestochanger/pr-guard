@@ -1,0 +1,21 @@
+{
+  "name": "@pr-guard/github",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@octokit/auth-app": "latest",
+    "@octokit/rest": "latest",
+    "@pr-guard/shared": "file:../shared",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest"
+  }
+}
