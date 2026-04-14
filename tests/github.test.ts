@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import {
+  createPullRequestComment,
   normalizeGitHubPrivateKey,
   publishOrUpdateManagedComment,
   verifyWebhookSignature
@@ -93,5 +94,35 @@ describe("managed PR comment publishing", () => {
     expect(octokit.issues.createComment).toHaveBeenCalledWith(
       expect.objectContaining({ issue_number: 5 })
     );
+  });
+});
+
+describe("manual PR comment publishing", () => {
+  it("creates a new pull request comment with the exact body", async () => {
+    const octokit = {
+      issues: {
+        createComment: vi.fn(async () => ({
+          data: { id: 789, html_url: "https://github.test/comment/789" }
+        }))
+      }
+    };
+
+    const result = await createPullRequestComment({
+      octokit: octokit as never,
+      fullName: "owner/repo",
+      pullNumber: 5,
+      body: "Manual note\n\nPlease take a look."
+    });
+
+    expect(result).toEqual({
+      commentId: 789n,
+      htmlUrl: "https://github.test/comment/789"
+    });
+    expect(octokit.issues.createComment).toHaveBeenCalledWith({
+      owner: "owner",
+      repo: "repo",
+      issue_number: 5,
+      body: "Manual note\n\nPlease take a look."
+    });
   });
 });

@@ -4,7 +4,8 @@ import type {
   GitHubChangedFile,
   GitHubPullRequestRef,
   GitHubRepositoryRef,
-  PublishedManagedComment
+  PublishedManagedComment,
+  PublishedPullRequestComment
 } from "./types";
 
 export function splitRepositoryFullName(fullName: string): { owner: string; repo: string } {
@@ -179,6 +180,26 @@ export async function publishOrUpdateManagedComment(input: {
   return {
     commentId: BigInt(created.data.id),
     status: "PUBLISHED",
+    htmlUrl: created.data.html_url
+  };
+}
+
+export async function createPullRequestComment(input: {
+  octokit: Octokit;
+  fullName: string;
+  pullNumber: number;
+  body: string;
+}): Promise<PublishedPullRequestComment> {
+  const { owner, repo } = splitRepositoryFullName(input.fullName);
+  const created = await input.octokit.issues.createComment({
+    owner,
+    repo,
+    issue_number: input.pullNumber,
+    body: input.body
+  });
+
+  return {
+    commentId: BigInt(created.data.id),
     htmlUrl: created.data.html_url
   };
 }

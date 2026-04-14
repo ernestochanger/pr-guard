@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAnalysisForUser } from "@pr-guard/db";
 import { Badge, formatDate } from "@/components/badges";
+import { ManualPrCommentForm } from "@/components/manual-pr-comment-form";
 import { RerunButton } from "@/components/rerun-button";
 import { ReviewerRunCard } from "@/components/reviewer-run-card";
 import { requireUser } from "@/lib/session";
@@ -60,6 +61,8 @@ export default async function AnalysisDetailPage({ params }: { params: Promise<{
           <p className="muted">Created {formatDate(analysis.createdAt)}</p>
         </div>
       </div>
+
+      <ManualPrCommentForm analysisId={analysis.id} />
 
       <section className="card stack">
         <h3>Timeline</h3>

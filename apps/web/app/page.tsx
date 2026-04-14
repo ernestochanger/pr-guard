@@ -58,9 +58,6 @@ export default async function HomePage({
           </p>
           <div className="actions">
             <SignInButton />
-            <a className="button secondary" href="#how-it-works">
-              Local setup
-            </a>
           </div>
           {authError ? (
             <p className="auth-error">

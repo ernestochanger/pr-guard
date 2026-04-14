@@ -5,14 +5,21 @@ import { requireUser } from "@/lib/session";
 import { syncUserRepositoryMemberships } from "@/lib/github-memberships";
 import { serializeForJson } from "@/lib/serialize";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await requireUser();
     await syncUserRepositoryMemberships(user.id);
     const env = getRuntimeEnv();
+    const url = new URL(request.url);
+    const inactiveView = url.searchParams.get("view") === "inactive";
 
     const repositories = await prisma.repositoryMembership.findMany({
-      where: { userId: user.id },
+      where: {
+        userId: user.id,
+        repository: inactiveView
+          ? { connectionStatus: { not: "CONNECTED" } }
+          : { connectionStatus: "CONNECTED" }
+      },
       include: {
         repository: {
           include: {
