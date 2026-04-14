@@ -85,6 +85,12 @@ export const commentPublishJobSchema = z.object({
   attemptId: z.string().cuid()
 });
 
+export const manualPullRequestCommentSchema = z
+  .object({
+    body: z.string().trim().min(1, "Comment body is required.").max(65_000)
+  })
+  .strict();
+
 export const installationSyncJobSchema = z.object({
   installationId: z.string().cuid().optional(),
   githubInstallationId: z.number().int().positive(),
@@ -107,5 +113,6 @@ export type NormalizedFinding = z.infer<typeof normalizedFindingSchema>;
 export type AnalysisListFilters = z.infer<typeof analysisListFiltersSchema>;
 export type PullRequestAnalysisJob = z.infer<typeof pullRequestAnalysisJobSchema>;
 export type CommentPublishJob = z.infer<typeof commentPublishJobSchema>;
+export type ManualPullRequestCommentInput = z.infer<typeof manualPullRequestCommentSchema>;
 export type InstallationSyncJob = z.infer<typeof installationSyncJobSchema>;
 export type RealtimeEventPayload = z.infer<typeof realtimeEventPayloadSchema>;

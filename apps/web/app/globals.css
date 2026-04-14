@@ -34,7 +34,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -171,6 +172,11 @@ h3 {
   margin-top: 28px;
 }
 
+.compact-actions {
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
 .button,
 button {
   display: inline-flex;
@@ -227,6 +233,10 @@ button:disabled {
   background: var(--surface);
   box-shadow: var(--shadow);
   padding: 18px;
+}
+
+.repository-card-link {
+  min-width: 0;
 }
 
 .card.compact {
@@ -411,12 +421,26 @@ button:disabled {
 }
 
 select,
-input[type="text"] {
+input[type="text"],
+textarea {
   min-height: 40px;
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
+}
+
+textarea {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.text-link {
+  color: var(--accent-strong);
+  font-weight: 800;
+  text-decoration: underline;
 }
 
 .timeline {
@@ -484,6 +508,12 @@ input[type="text"] {
 
 .inline-error {
   color: var(--danger);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.inline-status {
+  color: var(--muted);
   font-size: 14px;
   font-weight: 700;
 }

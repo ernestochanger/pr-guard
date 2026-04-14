@@ -37,3 +37,8 @@ export type PublishedManagedComment = {
   status: "PUBLISHED" | "UPDATED";
   htmlUrl: string;
 };
+
+export type PublishedPullRequestComment = {
+  commentId: bigint;
+  htmlUrl: string;
+};

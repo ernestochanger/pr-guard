@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { appSettingsSchema, repositorySettingsSchema } from "@pr-guard/shared";
+import {
+  appSettingsSchema,
+  manualPullRequestCommentSchema,
+  repositorySettingsSchema
+} from "@pr-guard/shared";
 
 describe("repository settings validation", () => {
   it("requires at least one reviewer", () => {
@@ -42,5 +46,25 @@ describe("repository settings validation", () => {
     });
 
     expect(settings.defaultAiProvider).toBe("CLAUDE");
+  });
+});
+
+describe("manual pull request comment validation", () => {
+  it("accepts and trims valid comment text", () => {
+    const input = manualPullRequestCommentSchema.parse({
+      body: "  Looks good after the follow-up fix.  "
+    });
+
+    expect(input.body).toBe("Looks good after the follow-up fix.");
+  });
+
+  it("rejects empty comment text", () => {
+    expect(() => manualPullRequestCommentSchema.parse({ body: "   " })).toThrow();
+  });
+
+  it("rejects over-limit comment text", () => {
+    expect(() =>
+      manualPullRequestCommentSchema.parse({ body: "a".repeat(65_001) })
+    ).toThrow();
   });
 });
