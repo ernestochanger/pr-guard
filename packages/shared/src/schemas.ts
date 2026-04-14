@@ -22,13 +22,17 @@ export const repositorySettingsSchema = z
     qualityEnabled: z.boolean(),
     securityEnabled: z.boolean(),
     architectureEnabled: z.boolean(),
-    minimumSeverity: severitySchema,
-    aiProvider: aiProviderSchema
+    minimumSeverity: severitySchema
   })
+  .strict()
   .refine(
     (value) => value.qualityEnabled || value.securityEnabled || value.architectureEnabled,
     "At least one AI reviewer must remain enabled."
   );
+
+export const appSettingsSchema = z.object({
+  defaultAiProvider: aiProviderSchema
+});
 
 export const aiReviewerFindingSchema = z.object({
   title: z.string().trim().min(1).max(180),
@@ -96,6 +100,7 @@ export const realtimeEventPayloadSchema = z.object({
 });
 
 export type RepositorySettingsInput = z.infer<typeof repositorySettingsSchema>;
+export type AppSettingsInput = z.infer<typeof appSettingsSchema>;
 export type AIReviewerOutput = z.infer<typeof aiReviewerOutputSchema>;
 export type AIReviewerFinding = z.infer<typeof aiReviewerFindingSchema>;
 export type NormalizedFinding = z.infer<typeof normalizedFindingSchema>;

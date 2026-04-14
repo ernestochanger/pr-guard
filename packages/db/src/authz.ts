@@ -2,6 +2,23 @@ import type { Repository } from "@prisma/client";
 import { ForbiddenError, NotFoundError } from "@pr-guard/shared";
 import { prisma } from "./client";
 
+export async function assertUserCanManageAppSettings(userId: string): Promise<void> {
+  const adminMembership = await prisma.repositoryMembership.findFirst({
+    where: {
+      userId,
+      canAdmin: true,
+      repository: {
+        connectionStatus: "CONNECTED"
+      }
+    },
+    select: { id: true }
+  });
+
+  if (!adminMembership) {
+    throw new ForbiddenError("Admin access to at least one connected repository is required.");
+  }
+}
+
 export async function getRepositoryForUser(
   repositoryId: string,
   userId: string,

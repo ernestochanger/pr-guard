@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from "openai";
 import {
@@ -31,7 +32,8 @@ export type StructuredReviewResult = {
 
 const providerDefaults: Record<AIProvider, string> = {
   OPENAI: "gpt-4.1-mini",
-  GOOGLE: "gemini-2.0-flash"
+  GOOGLE: "gemini-2.0-flash",
+  CLAUDE: "claude-sonnet-4-20250514"
 };
 
 function timeoutSignal(timeoutMs: number): AbortSignal {
@@ -141,6 +143,49 @@ async function runGoogle(request: StructuredReviewRequest): Promise<StructuredRe
   };
 }
 
+async function runClaude(request: StructuredReviewRequest): Promise<StructuredReviewResult> {
+  const env = getRuntimeEnv();
+  if (!env.ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY is required for Claude reviews.");
+  }
+
+  const model = providerDefaults.CLAUDE;
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const prompt = `${buildUserPrompt({
+    reviewerType: request.reviewerType,
+    diffContext: request.diffContext,
+    deterministicFindingSummaries: request.deterministicFindingSummaries ?? []
+  })}\n\nReturn only a valid JSON object. Do not include Markdown fences, commentary, or extra text.`;
+
+  const response = await withRetry(() =>
+    client.messages.create(
+      {
+        model,
+        max_tokens: 4096,
+        temperature: 0.1,
+        system: buildSystemPrompt(request.reviewerType),
+        messages: [{ role: "user", content: prompt }]
+      },
+      { signal: timeoutSignal(env.AI_TIMEOUT_MS) }
+    )
+  );
+
+  const rawText = response.content
+    .filter((block) => block.type === "text")
+    .map((block) => block.text)
+    .join("");
+
+  return {
+    provider: "CLAUDE",
+    reviewerType: request.reviewerType,
+    output: parseAIReviewerOutput(rawText),
+    rawText,
+    model,
+    promptTokens: response.usage.input_tokens,
+    completionTokens: response.usage.output_tokens
+  };
+}
+
 export async function generateStructuredReview(
   request: StructuredReviewRequest
 ): Promise<StructuredReviewResult> {
@@ -149,5 +194,8 @@ export async function generateStructuredReview(
   if (request.provider === "OPENAI") {
     return runOpenAI(request);
   }
-  return runGoogle(request);
+  if (request.provider === "GOOGLE") {
+    return runGoogle(request);
+  }
+  return runClaude(request);
 }

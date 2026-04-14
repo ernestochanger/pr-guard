@@ -1,0 +1,10 @@
+ALTER TYPE "AIProvider" ADD VALUE IF NOT EXISTS 'CLAUDE';
+
+CREATE TABLE IF NOT EXISTS "AppSettings" (
+  "id" TEXT NOT NULL DEFAULT 'app',
+  "defaultAiProvider" "AIProvider" NOT NULL DEFAULT 'OPENAI',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "AppSettings_pkey" PRIMARY KEY ("id")
+);

@@ -7,7 +7,7 @@ import {
   prisma
 } from "@pr-guard/db";
 import { createInstallationOctokit, getPullRequest } from "@pr-guard/github";
-import { getRuntimeEnv, pullRequestAnalysisJobSchema } from "@pr-guard/shared";
+import { pullRequestAnalysisJobSchema } from "@pr-guard/shared";
 import { ok, fail } from "@/lib/api";
 import { assertSameOrigin } from "@/lib/csrf";
 import { toPrismaJson } from "@/lib/json";
@@ -70,16 +70,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         htmlUrl: latestPr.htmlUrl
       }
     });
-    const env = getRuntimeEnv();
     const settings =
-      repositoryWithInstallation.settings ??
-      (await getOrCreateRepositorySettings(repository.id, { aiProvider: env.DEFAULT_AI_PROVIDER }));
+      repositoryWithInstallation.settings ?? (await getOrCreateRepositorySettings(repository.id));
 
     const { analysis, attempt } = await createAttemptForAnalysis({
       repositoryId: repository.id,
       pullRequestId: pullRequest.id,
       headSha: latestPr.headSha,
-      aiProvider: settings.aiProvider,
+      aiProvider: pullRequest.aiProvider,
       minimumSeverity: settings.minimumSeverity,
       sourceEventType: "MANUAL_RERUN",
       createdByUserId: user.id

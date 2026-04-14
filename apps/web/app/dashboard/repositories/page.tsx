@@ -70,7 +70,6 @@ export default async function RepositoriesPage() {
                   <span className="badge">{role}</span>
                   {canAdmin ? <span className="badge">ADMIN</span> : null}
                   <span className="badge">{repository._count.analyses} analyses</span>
-                  <span className="badge">{repository.settings?.aiProvider ?? "OPENAI"}</span>
                 </div>
                 <p className="muted">
                   Latest:{" "}

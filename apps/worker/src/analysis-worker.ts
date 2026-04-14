@@ -186,14 +186,14 @@ export async function processAnalysisJob(job: Job) {
           },
           update: {
             status: "RUNNING",
-            aiProvider: settings.aiProvider,
+            aiProvider: analysis.aiProvider,
             startedAt: new Date(),
             error: null
           },
           create: {
             attemptId: attempt.id,
             reviewerType,
-            aiProvider: settings.aiProvider,
+            aiProvider: analysis.aiProvider,
             status: "RUNNING",
             startedAt: new Date()
           }
@@ -202,7 +202,7 @@ export async function processAnalysisJob(job: Job) {
 
         try {
           const result = await generateStructuredReview({
-            provider: settings.aiProvider,
+            provider: analysis.aiProvider,
             reviewerType,
             diffContext: diffPrompt,
             deterministicFindingSummaries: deterministicSummaries
@@ -270,7 +270,7 @@ export async function processAnalysisJob(job: Job) {
       diffContext.files.length === 0 ? "SKIPPED" : reviewerFailures.length > 0 ? "PARTIAL" : "COMPLETED";
     const summary = buildPrSummaryMarkdown({
       status: finalStatus,
-      provider: settings.aiProvider,
+      provider: analysis.aiProvider,
       findings: consolidated.surfacedFindings,
       allFindingsCount: consolidated.allFindings.length,
       overallSeverity: consolidated.overallSeverity,

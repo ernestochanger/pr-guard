@@ -1,12 +1,11 @@
 import type { Job } from "bullmq";
 import { getOrCreateRepositorySettings, prisma } from "@pr-guard/db";
 import { createInstallationOctokit, listInstallationRepositories } from "@pr-guard/github";
-import { getRuntimeEnv, installationSyncJobSchema } from "@pr-guard/shared";
+import { installationSyncJobSchema } from "@pr-guard/shared";
 import { toPrismaJson } from "./json";
 
 export async function processInstallationSyncJob(job: Job) {
   const data = installationSyncJobSchema.parse(job.data);
-  const env = getRuntimeEnv();
 
   await prisma.queueTask.upsert({
     where: { queueName_jobId: { queueName: job.queueName, jobId: String(job.id) } },
@@ -76,7 +75,7 @@ export async function processInstallationSyncJob(job: Job) {
         syncedAt: new Date()
       }
     });
-    await getOrCreateRepositorySettings(repository.id, { aiProvider: env.DEFAULT_AI_PROVIDER });
+    await getOrCreateRepositorySettings(repository.id);
   }
 
   await prisma.repository.updateMany({

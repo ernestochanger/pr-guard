@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prisma, transitionAnalysis } from "@pr-guard/db";
+import { createAttemptForAnalysis, prisma, transitionAnalysis } from "@pr-guard/db";
 
 const runDbTests = process.env.RUN_DB_TESTS === "true";
 
@@ -54,5 +54,41 @@ describe.skipIf(!runDbTests)("database-backed analysis transitions", () => {
     });
     expect(updated.status).toBe("COMPLETED");
     expect(updated.attempts[0]?.status).toBe("COMPLETED");
+  });
+
+  it("snapshots provider from the pull request when creating an analysis", async () => {
+    const installation = await prisma.gitHubInstallation.create({
+      data: { githubInstallationId: BigInt(Date.now() + 10), accountLogin: "test" }
+    });
+    const repository = await prisma.repository.create({
+      data: {
+        githubRepositoryId: BigInt(Date.now() + 11),
+        installationId: installation.id,
+        owner: "owner",
+        name: "repo-provider",
+        fullName: "owner/repo-provider",
+        htmlUrl: "https://github.test/owner/repo-provider"
+      }
+    });
+    const pullRequest = await prisma.pullRequest.create({
+      data: {
+        repositoryId: repository.id,
+        number: 2,
+        title: "PR",
+        headSha: "def",
+        htmlUrl: "https://github.test/owner/repo-provider/pull/2",
+        aiProvider: "CLAUDE"
+      }
+    });
+
+    const { analysis } = await createAttemptForAnalysis({
+      repositoryId: repository.id,
+      pullRequestId: pullRequest.id,
+      headSha: "def",
+      minimumSeverity: "MEDIUM",
+      sourceEventType: "OPENED"
+    });
+
+    expect(analysis.aiProvider).toBe("CLAUDE");
   });
 });

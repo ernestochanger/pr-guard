@@ -27,7 +27,7 @@ export const findingCategories = [
   "TESTING"
 ] as const;
 
-export const aiProviders = ["OPENAI", "GOOGLE"] as const;
+export const aiProviders = ["OPENAI", "GOOGLE", "CLAUDE"] as const;
 
 export const pullRequestEventTypes = ["OPENED", "REOPENED", "SYNCHRONIZE", "MANUAL_RERUN"] as const;
 

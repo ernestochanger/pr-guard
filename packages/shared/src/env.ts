@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import dotenv from "dotenv";
 import { z } from "zod";
-import { aiProviderSchema } from "./schemas";
 
 let envFilesLoaded = false;
 
@@ -59,7 +58,7 @@ export const runtimeEnvSchema = z.object({
   GITHUB_APP_NAME: z.string().min(1),
   OPENAI_API_KEY: z.string().optional(),
   GOOGLE_AI_API_KEY: z.string().optional(),
-  DEFAULT_AI_PROVIDER: aiProviderSchema.default("OPENAI"),
+  ANTHROPIC_API_KEY: z.string().optional(),
   ANALYSIS_MAX_FILES: optionalIntegerString(40),
   ANALYSIS_MAX_PATCH_CHARS: optionalIntegerString(60000),
   AI_TIMEOUT_MS: optionalIntegerString(45000),

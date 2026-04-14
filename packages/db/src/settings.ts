@@ -10,8 +10,7 @@ export function validateRepositorySettings(input: unknown): RepositorySettingsIn
 }
 
 export async function getOrCreateRepositorySettings(
-  repositoryId: string,
-  defaults: Pick<RepositorySettingsInput, "aiProvider">
+  repositoryId: string
 ): Promise<RepositorySettings> {
   return prisma.repositorySettings.upsert({
     where: { repositoryId },
@@ -21,8 +20,7 @@ export async function getOrCreateRepositorySettings(
       qualityEnabled: true,
       securityEnabled: true,
       architectureEnabled: true,
-      minimumSeverity: "MEDIUM",
-      aiProvider: defaults.aiProvider
+      minimumSeverity: "MEDIUM"
     }
   });
 }
