@@ -17,6 +17,7 @@ import { fail, ok } from "@/lib/api";
 import { rateLimit } from "@/lib/rate-limit";
 import { getAnalysisQueue, getInstallationSyncQueue } from "@/lib/queues";
 import { errorMessage, toPrismaJson } from "@/lib/json";
+import { ensureAnalysisJobQueued } from "@/lib/analysis-queue";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,7 +44,8 @@ async function enqueueAnalysis(input: {
     }
   });
   if (activeExisting) {
-    return { analysisId: activeExisting.id, queued: false };
+    const ensured = await ensureAnalysisJobQueued(activeExisting.id);
+    return { analysisId: activeExisting.id, queued: ensured.queued };
   }
 
   const previousSameHead = await prisma.pullRequestAnalysis.findFirst({

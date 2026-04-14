@@ -1,6 +1,10 @@
 import crypto from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
-import { publishOrUpdateManagedComment, verifyWebhookSignature } from "@pr-guard/github";
+import {
+  normalizeGitHubPrivateKey,
+  publishOrUpdateManagedComment,
+  verifyWebhookSignature
+} from "@pr-guard/github";
 
 describe("GitHub webhook signature validation", () => {
   it("validates sha256 signatures with timing-safe comparison", () => {
@@ -10,6 +14,26 @@ describe("GitHub webhook signature validation", () => {
 
     expect(verifyWebhookSignature({ secret, payload, signatureHeader: signature })).toBe(true);
     expect(verifyWebhookSignature({ secret, payload, signatureHeader: "sha256=bad" })).toBe(false);
+  });
+});
+
+describe("GitHub App private key normalization", () => {
+  const pem = [
+    "-----BEGIN RSA PRIVATE KEY-----",
+    "abc123",
+    "-----END RSA PRIVATE KEY-----"
+  ].join("\n");
+
+  it("accepts escaped newline PEM values from .env files", () => {
+    expect(normalizeGitHubPrivateKey(pem.replace(/\n/g, "\\n"))).toBe(pem);
+  });
+
+  it("accepts base64 encoded PEM values", () => {
+    expect(normalizeGitHubPrivateKey(Buffer.from(pem, "utf8").toString("base64"))).toBe(pem);
+  });
+
+  it("throws an actionable error for malformed values", () => {
+    expect(() => normalizeGitHubPrivateKey("not-a-private-key")).toThrow(/GITHUB_PRIVATE_KEY/);
   });
 });
 

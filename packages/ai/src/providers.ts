@@ -31,7 +31,7 @@ export type StructuredReviewResult = {
 
 const providerDefaults: Record<AIProvider, string> = {
   OPENAI: "gpt-4.1-mini",
-  GOOGLE: "gemini-1.5-flash"
+  GOOGLE: "gemini-2.0-flash"
 };
 
 function timeoutSignal(timeoutMs: number): AbortSignal {

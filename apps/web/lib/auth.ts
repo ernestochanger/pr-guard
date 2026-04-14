@@ -97,7 +97,7 @@ export const authOptions: NextAuthOptions = {
     }
   },
   events: {
-    async signIn({ user, profile }) {
+    async signIn({ user, account, profile }) {
       const githubProfile = profile as { login?: string; id?: number } | undefined;
       await prisma.user.update({
         where: { id: user.id },
@@ -106,6 +106,25 @@ export const authOptions: NextAuthOptions = {
           githubUserId: githubProfile?.id ? BigInt(githubProfile.id) : undefined
         }
       });
+
+      if (account?.provider === "github" && account.access_token && account.providerAccountId) {
+        await prisma.account.update({
+          where: {
+            provider_providerAccountId: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId
+            }
+          },
+          data: {
+            access_token: account.access_token,
+            refresh_token: account.refresh_token,
+            expires_at: account.expires_at,
+            token_type: account.token_type,
+            scope: account.scope,
+            id_token: account.id_token
+          }
+        });
+      }
     }
   },
   logger: {
