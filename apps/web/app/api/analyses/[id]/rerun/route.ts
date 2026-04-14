@@ -15,6 +15,7 @@ import { getAnalysisQueue } from "@/lib/queues";
 import { rateLimit } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/session";
 import { serializeForJson } from "@/lib/serialize";
+import { ensureAnalysisJobQueued } from "@/lib/analysis-queue";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -52,7 +53,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     });
     if (active) {
-      return ok(serializeForJson({ analysisId: active.id, queued: false }));
+      const ensured = await ensureAnalysisJobQueued(active.id);
+      return ok(serializeForJson({ analysisId: active.id, queued: ensured.queued }));
     }
 
     const pullRequest = await prisma.pullRequest.update({

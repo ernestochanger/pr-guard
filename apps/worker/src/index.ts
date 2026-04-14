@@ -5,6 +5,7 @@ import { processAnalysisJob } from "./analysis-worker";
 import { processCommentPublishJob } from "./comment-worker";
 import { processInstallationSyncJob } from "./installation-worker";
 import { redisConnection } from "./queues";
+import { recoverQueuedAnalyses } from "./recover-queued-analyses";
 
 const workers = [
   new Worker(queueNames.analysis, processAnalysisJob, {
@@ -41,3 +42,7 @@ process.on("SIGTERM", () => void shutdown("SIGTERM"));
 process.on("SIGINT", () => void shutdown("SIGINT"));
 
 logger.info("PR Guard worker started");
+
+void recoverQueuedAnalyses().catch((error) => {
+  logger.error({ error }, "Failed to recover queued analyses");
+});

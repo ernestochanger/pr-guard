@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAnalysisForUser } from "@pr-guard/db";
 import { Badge, formatDate } from "@/components/badges";
 import { RerunButton } from "@/components/rerun-button";
+import { ReviewerRunCard } from "@/components/reviewer-run-card";
 import { requireUser } from "@/lib/session";
 
 export default async function AnalysisDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -87,15 +88,15 @@ export default async function AnalysisDetailPage({ params }: { params: Promise<{
 
       <section className="stack">
         <h3>Reviewer runs</h3>
-        <div className="grid">
+        <div className="grid reviewer-runs-grid">
           {analysis.attempts[0]?.reviewerRuns.map((run) => (
-            <div className="card compact stack" key={run.id}>
-              <div className="row">
-                <strong>{run.reviewerType}</strong>
-                <Badge value={run.status} />
-              </div>
-              <p className="muted">{run.error ?? run.summary ?? "No reviewer note."}</p>
-            </div>
+            <ReviewerRunCard
+              key={run.id}
+              reviewerType={run.reviewerType}
+              status={run.status}
+              summary={run.summary}
+              error={run.error}
+            />
           ))}
         </div>
       </section>
