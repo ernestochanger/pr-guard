@@ -18,8 +18,8 @@ scan entire repositories.
   events, and analysis lifecycle transitions.
 - `packages/github`: GitHub App auth, webhook signature validation, repository/PR fetching, and
   managed PR comment publishing.
-- `packages/ai`: OpenAI and Google AI provider adapters, reviewer prompts, timeout/retry handling,
-  JSON extraction, and zod validation.
+- `packages/ai`: OpenAI, Google AI, and Claude provider adapters, reviewer prompts,
+  timeout/retry handling, JSON extraction, and zod validation.
 - `packages/analysis`: diff filtering/chunking, deterministic rules, finding normalization,
   dedupe, prioritization, and markdown summary generation.
 - `packages/shared`: enums, zod schemas, env validation, queue names, logger, and shared errors.
@@ -120,8 +120,7 @@ Important values:
 - `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`: OAuth credentials used for user sign-in.
 - `GITHUB_APP_ID`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_PRIVATE_KEY`, and `GITHUB_APP_NAME`: GitHub App
   integration.
-- `OPENAI_API_KEY` and `GOOGLE_AI_API_KEY`: AI provider credentials.
-- `DEFAULT_AI_PROVIDER`: `OPENAI` or `GOOGLE` for new repository settings.
+- `OPENAI_API_KEY`, `GOOGLE_AI_API_KEY`, and `ANTHROPIC_API_KEY`: AI provider credentials.
 - `ANALYSIS_MAX_FILES` and `ANALYSIS_MAX_PATCH_CHARS`: large PR guardrails.
 - `AI_TIMEOUT_MS`: per-reviewer request timeout.
 
@@ -180,9 +179,13 @@ Repository settings are per repo:
 - Security reviewer enabled or disabled
 - Architecture reviewer enabled or disabled
 - Minimum surfaced severity: `LOW`, `MEDIUM`, or `HIGH`
-- AI provider: `OPENAI` or `GOOGLE`
 
 At least one reviewer must remain enabled. Settings affect future analyses only.
+
+The dashboard settings page controls the app-wide default provider: `OPENAI`, `GOOGLE`, or
+`CLAUDE`. When a pull request is first detected, PR Guard stores the default provider on that pull
+request. Future analyses and reruns for that pull request use the stored provider snapshot, even if
+the app-wide default changes later.
 
 ## PR Summary Comment Lifecycle
 
@@ -273,7 +276,7 @@ RUN_DB_TESTS=true npm test
 - No merge blocking
 - No full repository scans
 - No GitLab, Bitbucket, Slack, Jira, or IDE extension
-- No AI providers beyond OpenAI and Google AI
+- No AI providers beyond OpenAI, Google AI, and Claude
 
 ## Useful Commands
 

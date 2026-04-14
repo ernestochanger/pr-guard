@@ -1,4 +1,5 @@
 export * from "./client";
+export * from "./app-settings";
 export * from "./settings";
 export * from "./authz";
 export * from "./realtime";

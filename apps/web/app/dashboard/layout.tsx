@@ -19,6 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </Link>
         <nav className="nav">
           <Link href="/dashboard/repositories">Repositories</Link>
+          <Link href="/dashboard/settings">Settings</Link>
           <RealtimeBridge />
           <span>{session.user.githubLogin ?? session.user.email}</span>
           <SignOutButton />

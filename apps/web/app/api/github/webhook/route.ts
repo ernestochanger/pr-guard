@@ -1,4 +1,9 @@
-import { emitRealtimeEvent, getOrCreateRepositorySettings, prisma } from "@pr-guard/db";
+import {
+  emitRealtimeEvent,
+  getOrCreateAppSettings,
+  getOrCreateRepositorySettings,
+  prisma
+} from "@pr-guard/db";
 import {
   githubInstallationRepositoriesWebhookSchema,
   githubInstallationWebhookSchema,
@@ -32,9 +37,11 @@ async function enqueueAnalysis(input: {
     where: { id: input.repositoryId },
     include: { settings: true }
   });
-  const env = getRuntimeEnv();
-  const settings =
-    repository.settings ?? (await getOrCreateRepositorySettings(repository.id, { aiProvider: env.DEFAULT_AI_PROVIDER }));
+  const settings = repository.settings ?? (await getOrCreateRepositorySettings(repository.id));
+  const pullRequest = await prisma.pullRequest.findUniqueOrThrow({
+    where: { id: input.pullRequestId },
+    select: { aiProvider: true }
+  });
 
   const activeExisting = await prisma.pullRequestAnalysis.findFirst({
     where: {
@@ -64,7 +71,7 @@ async function enqueueAnalysis(input: {
     repositoryId: input.repositoryId,
     pullRequestId: input.pullRequestId,
     headSha: input.headSha,
-    aiProvider: settings.aiProvider,
+    aiProvider: pullRequest.aiProvider,
     minimumSeverity: settings.minimumSeverity,
     sourceEventType: input.sourceEventType
   });
@@ -190,6 +197,7 @@ export async function POST(request: Request) {
       }
 
       const pull = parsed.data.pull_request;
+      const appSettings = await getOrCreateAppSettings();
       const pullRequest = await prisma.pullRequest.upsert({
         where: {
           repositoryId_number: {
@@ -221,6 +229,7 @@ export async function POST(request: Request) {
           baseRef: pull.base.ref ?? null,
           state: pull.state,
           htmlUrl: pull.html_url,
+          aiProvider: appSettings.defaultAiProvider,
           lastWebhookEventAt: new Date()
         }
       });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { repositorySettingsSchema } from "@pr-guard/shared";
+import { appSettingsSchema, repositorySettingsSchema } from "@pr-guard/shared";
 
 describe("repository settings validation", () => {
   it("requires at least one reviewer", () => {
@@ -8,22 +8,39 @@ describe("repository settings validation", () => {
         qualityEnabled: false,
         securityEnabled: false,
         architectureEnabled: false,
-        minimumSeverity: "MEDIUM",
-        aiProvider: "OPENAI"
+        minimumSeverity: "MEDIUM"
       })
     ).toThrow();
   });
 
-  it("accepts provider and threshold settings", () => {
+  it("accepts reviewer and threshold settings", () => {
     const settings = repositorySettingsSchema.parse({
       qualityEnabled: true,
       securityEnabled: false,
       architectureEnabled: true,
-      minimumSeverity: "HIGH",
-      aiProvider: "GOOGLE"
+      minimumSeverity: "HIGH"
     });
 
-    expect(settings.aiProvider).toBe("GOOGLE");
     expect(settings.minimumSeverity).toBe("HIGH");
+  });
+
+  it("rejects repository-level provider settings", () => {
+    expect(() =>
+      repositorySettingsSchema.parse({
+        qualityEnabled: true,
+        securityEnabled: true,
+        architectureEnabled: true,
+        minimumSeverity: "MEDIUM",
+        aiProvider: "CLAUDE"
+      })
+    ).toThrow();
+  });
+
+  it("accepts app default provider settings", () => {
+    const settings = appSettingsSchema.parse({
+      defaultAiProvider: "CLAUDE"
+    });
+
+    expect(settings.defaultAiProvider).toBe("CLAUDE");
   });
 });

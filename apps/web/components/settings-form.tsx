@@ -2,14 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import type { AIProvider, Severity } from "@pr-guard/shared";
+import type { Severity } from "@pr-guard/shared";
 
 type Settings = {
   qualityEnabled: boolean;
   securityEnabled: boolean;
   architectureEnabled: boolean;
   minimumSeverity: Severity;
-  aiProvider: AIProvider;
 };
 
 export function SettingsForm({ repositoryId, initialSettings }: { repositoryId: string; initialSettings: Settings }) {
@@ -79,18 +78,6 @@ export function SettingsForm({ repositoryId, initialSettings }: { repositoryId: 
             <option value="LOW">LOW</option>
             <option value="MEDIUM">MEDIUM</option>
             <option value="HIGH">HIGH</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label htmlFor="aiProvider">AI provider</label>
-          <select
-            id="aiProvider"
-            value={settings.aiProvider}
-            onChange={(event) => update("aiProvider", event.target.value as AIProvider)}
-          >
-            <option value="OPENAI">OpenAI</option>
-            <option value="GOOGLE">Google AI</option>
           </select>
         </div>
 

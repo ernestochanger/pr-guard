@@ -1,6 +1,6 @@
 import { getOrCreateRepositorySettings, prisma } from "@pr-guard/db";
 import { createInstallationOctokit, listInstallationRepositories } from "@pr-guard/github";
-import { getRuntimeEnv, logger } from "@pr-guard/shared";
+import { logger } from "@pr-guard/shared";
 
 export type InstallationCallbackResult = {
   installationId: number;
@@ -25,7 +25,6 @@ export async function handleInstallationCallback(input: {
   );
 
   try {
-    const env = getRuntimeEnv();
     const octokit = await createInstallationOctokit(input.installationId);
     const repos = await listInstallationRepositories(octokit);
     const installation = await prisma.gitHubInstallation.upsert({
@@ -67,7 +66,7 @@ export async function handleInstallationCallback(input: {
           syncedAt: new Date()
         }
       });
-      await getOrCreateRepositorySettings(repository.id, { aiProvider: env.DEFAULT_AI_PROVIDER });
+      await getOrCreateRepositorySettings(repository.id);
 
       if (input.userId) {
         await prisma.repositoryMembership.upsert({

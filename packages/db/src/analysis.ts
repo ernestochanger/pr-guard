@@ -1,4 +1,4 @@
-import type { AnalysisStatus, Prisma } from "@prisma/client";
+import type { AIProvider, AnalysisStatus, Prisma } from "@prisma/client";
 import { prisma } from "./client";
 
 export async function transitionAnalysis(input: {
@@ -55,18 +55,26 @@ export async function createAttemptForAnalysis(input: {
   repositoryId: string;
   pullRequestId: string;
   headSha: string;
-  aiProvider: "OPENAI" | "GOOGLE";
+  aiProvider?: AIProvider;
   minimumSeverity: "LOW" | "MEDIUM" | "HIGH";
   sourceEventType: "OPENED" | "REOPENED" | "SYNCHRONIZE" | "MANUAL_RERUN";
   createdByUserId?: string | null;
 }) {
   return prisma.$transaction(async (tx) => {
+    const pullRequest =
+      input.aiProvider === undefined
+        ? await tx.pullRequest.findUniqueOrThrow({
+            where: { id: input.pullRequestId },
+            select: { aiProvider: true }
+          })
+        : null;
+
     const analysis = await tx.pullRequestAnalysis.create({
       data: {
         repositoryId: input.repositoryId,
         pullRequestId: input.pullRequestId,
         headSha: input.headSha,
-        aiProvider: input.aiProvider,
+        aiProvider: input.aiProvider ?? pullRequest?.aiProvider ?? "OPENAI",
         minimumSeverity: input.minimumSeverity,
         sourceEventType: input.sourceEventType,
         createdByUserId: input.createdByUserId ?? null,

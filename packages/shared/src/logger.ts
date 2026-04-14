@@ -11,6 +11,7 @@ export const logger = pino({
       "GITHUB_APP_CLIENT_SECRET",
       "OPENAI_API_KEY",
       "GOOGLE_AI_API_KEY",
+      "ANTHROPIC_API_KEY",
       "NEXTAUTH_SECRET"
     ],
     remove: true
